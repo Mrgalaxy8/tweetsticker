@@ -2,6 +2,9 @@ import React, { useState, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import html2canvas from 'html2canvas';
 
+// Declare gtag for TypeScript to recognize the Google Analytics function
+declare const gtag: (...args: any[]) => void;
+
 const themes = [
     { name: 'Light', style: { background: '#ffffff', color: '#111827', secondaryColor: '#6b7280' } },
     { name: 'Dark', style: { background: '#1f2937', color: '#f9fafb', secondaryColor: '#9ca3af' } },
@@ -51,6 +54,11 @@ const Editor = ({ data, setData, style, setStyle, onDownload }) => {
 
     const handleThemeChange = (theme) => {
         setStyle(prev => ({ ...prev, ...theme.style }));
+        if (typeof gtag === 'function') {
+            gtag('event', 'change_theme', {
+                'theme_name': theme.name,
+            });
+        }
     };
 
     const handleImageUpload = (e) => {
@@ -159,6 +167,16 @@ const App = () => {
     const handleDownload = () => {
         const stickerElement = document.getElementById('tweet-sticker');
         if (stickerElement) {
+            // Track download event with Google Analytics
+            if (typeof gtag === 'function') {
+                const activeTheme = themes.find(t => t.style.background === style.background);
+                gtag('event', 'download_sticker', {
+                    'theme_name': activeTheme ? activeTheme.name : 'Custom',
+                    'padding': style.padding,
+                    'border_radius': style.borderRadius,
+                });
+            }
+
             html2canvas(stickerElement, {
                 backgroundColor: null, 
                 useCORS: true,
@@ -207,5 +225,7 @@ const App = () => {
 };
 
 const container = document.getElementById('root');
-const root = createRoot(container!);
-root.render(<App />);
+if (container) {
+    const root = createRoot(container);
+    root.render(<App />);
+}
