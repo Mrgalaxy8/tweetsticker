@@ -147,12 +147,27 @@ const Editor = ({ data, setData, style, setStyle, onDownload }) => {
     );
 };
 
+const getFormattedTimestamp = () => {
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+    const date = now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+    return `${time} · ${date}`;
+};
+
 const App = () => {
     const [data, setData] = useState({
         profilePic: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg',
         username: 'Njivai',
         content: 'Just created this amazing Tweet-to-Sticker generator! ✨\n\nNow you can turn any thought into a shareable masterpiece.\n\n#2027 #millionare',
-        timestamp: '9:41 AM · Oct 26, 2023',
+        timestamp: getFormattedTimestamp(),
     });
 
     const [style, setStyle] = useState({
