@@ -5,25 +5,6 @@ import html2canvas from 'html2canvas';
 // Declare gtag for TypeScript to recognize the Google Analytics function
 declare const gtag: (...args: any[]) => void;
 
-// Declare the Lipana SDK for TypeScript
-declare global {
-    interface Window {
-        Lipana: {
-            initiate: (options: {
-                publicKey: string;
-                amount: number;
-                currency: string;
-                phone: string;
-                metadata?: Record<string, any>;
-                onSuccess: () => void;
-                onFailure: (error: any) => void;
-                onWaiting?: () => void;
-            }) => void;
-        };
-    }
-}
-
-
 const themes = [
     { name: 'Light', style: { background: '#ffffff', color: '#111827', secondaryColor: '#6b7280' } },
     { name: 'Dark', style: { background: '#1f2937', color: '#f9fafb', secondaryColor: '#9ca3af' } },
@@ -181,76 +162,7 @@ const getFormattedTimestamp = () => {
     return `${time} · ${date}`;
 };
 
-const PaymentScreen = ({ onPaymentSuccess }) => {
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [message, setMessage] = useState({ text: '', type: '' });
-
-    const handlePayment = async () => {
-        if (!phoneNumber || !/^(254)\d{9}$/.test(phoneNumber)) {
-            setMessage({ text: 'Please enter a valid phone number starting with 254.', type: 'error' });
-            return;
-        }
-
-        setIsLoading(true);
-        setMessage({ text: 'Please check your phone to complete the payment.', type: '' });
-
-        window.Lipana.initiate({
-            publicKey: 'lip_pk_live_980222eca3ee8e9989ace4c5e6c821243d42e931e55b721dde359c2e68605ad7',
-            amount: 50,
-            currency: 'KES',
-            phone: phoneNumber,
-            metadata: { description: 'One-time access fee for TweetSticker Studio' },
-            onSuccess: () => {
-                setIsLoading(false);
-                setMessage({ text: 'Payment successful! Welcome to the studio.', type: 'success' });
-                sessionStorage.setItem('isPaid', 'true');
-                setTimeout(onPaymentSuccess, 1500);
-            },
-            onFailure: (error) => {
-                setIsLoading(false);
-                setMessage({ text: `Payment failed: ${error.message || 'Please try again.'}`, type: 'error' });
-            },
-            onWaiting: () => {
-                setMessage({ text: 'Waiting for you to enter your M-Pesa PIN...', type: '' });
-            }
-        });
-    };
-
-    return (
-        <div className="payment-overlay">
-            <div className="payment-modal">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginBottom: '1rem', stroke: '#0099ff'}}>
-                    <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2 7L12 12L22 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M12 12V22" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <h2>Unlock TweetSticker Studio</h2>
-                <p className="description">A one-time payment of KES 50 is required for full access.</p>
-                <div className="payment-form">
-                    <input
-                        type="tel"
-                        placeholder="254712345678"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        disabled={isLoading}
-                    />
-                    <button onClick={handlePayment} disabled={isLoading}>
-                        {isLoading ? 'Processing...' : 'Pay KES 50 to Access'}
-                    </button>
-                </div>
-                <p className={`payment-message ${message.type}`}>
-                    {message.text}
-                </p>
-            </div>
-        </div>
-    );
-};
-
-
 const App = () => {
-    const [isPaid, setIsPaid] = useState(sessionStorage.getItem('isPaid') === 'true');
-
     const [data, setData] = useState({
         profilePic: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg',
         username: 'Njivai',
@@ -265,6 +177,7 @@ const App = () => {
     });
     
     const previewPanelRef = useRef(null);
+
 
     const handleDownload = () => {
         const stickerElement = document.getElementById('tweet-sticker');
@@ -294,10 +207,6 @@ const App = () => {
             });
         }
     };
-
-    if (!isPaid) {
-        return <PaymentScreen onPaymentSuccess={() => setIsPaid(true)} />;
-    }
 
     return (
         <div className="app-container">
