@@ -373,13 +373,19 @@
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1"
+    "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1",
+    "express": "https://aistudiocdn.com/express@^5.1.0",
+    "path": "https://aistudiocdn.com/path@^0.12.7",
+    "axios": "https://aistudiocdn.com/axios@^1.13.2",
+    "url": "https://aistudiocdn.com/url@^0.11.4"
   }
 }
 </script>
+<!-- Babel for in-browser JSX compilation -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <script type="text/babel" data-type="module" src="/index.tsx" data-presets="react,typescript"></script>
 </body>
 </html>

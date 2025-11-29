@@ -1,0 +1,1 @@
+// Server file removed as requested. Payment logic moved to index.tsx
