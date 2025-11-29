@@ -1,9 +1,34 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import html2canvas from 'html2canvas';
 
 // Declare gtag for TypeScript to recognize the Google Analytics function
 declare const gtag: (...args: any[]) => void;
+
+// Utility to normalize phone numbers to 254xxxxxxxxx
+const normalizePhoneNumber = (input: string): string => {
+    // Remove all non-digit characters
+    let cleaned = input.replace(/\D/g, '');
+
+    // Case 1: Starts with 0 (e.g., 0712345678) -> Remove 0, prepend 254
+    if (cleaned.startsWith('0') && cleaned.length === 10) {
+        cleaned = '254' + cleaned.substring(1);
+    }
+    // Case 2: Starts with 7 or 1 (e.g., 712345678) -> Prepend 254
+    else if ((cleaned.startsWith('7') || cleaned.startsWith('1')) && cleaned.length === 9) {
+        cleaned = '254' + cleaned;
+    }
+    // Case 3: Already starts with 254
+    // Just ensure it's the right length in validation
+
+    return cleaned;
+};
+
+const validatePhoneNumber = (phone: string): boolean => {
+    return /^254\d{9}$/.test(phone);
+};
+
+// --- THEMES ---
 
 const themes = [
     { name: 'Light', style: { background: '#ffffff', color: '#111827', secondaryColor: '#6b7280' } },
@@ -15,6 +40,8 @@ const themes = [
     { name: 'Solar Flare', style: { background: 'linear-gradient(to right, #f12711, #f5af19)', color: '#ffffff', secondaryColor: '#fff0d9' } },
     { name: 'Royal Amethyst', style: { background: 'linear-gradient(to right, #4527a0, #7e57c2)', color: '#ffffff', secondaryColor: '#e7dfff' } },
 ];
+
+// --- COMPONENTS ---
 
 const TweetStickerPreview = ({ data, style }) => {
     const stickerStyle = {
@@ -43,7 +70,7 @@ const TweetStickerPreview = ({ data, style }) => {
     );
 };
 
-const Editor = ({ data, setData, style, setStyle, onDownload }) => {
+const Editor = ({ data, setData, style, setStyle, onDownload, user }) => {
     const handleDataChange = (e) => {
         setData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
@@ -147,6 +174,128 @@ const Editor = ({ data, setData, style, setStyle, onDownload }) => {
     );
 };
 
+// --- LOGIN PAGE ---
+
+const LoginPage = ({ onLogin }) => {
+    const [step, setStep] = useState<'phone' | 'otp'>('phone');
+    const [phoneInput, setPhoneInput] = useState('');
+    const [otpInput, setOtpInput] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [normalizedPhone, setNormalizedPhone] = useState('');
+
+    const handlePhoneSubmit = (e) => {
+        e.preventDefault();
+        setError('');
+        
+        try {
+            const normalized = normalizePhoneNumber(phoneInput);
+            if (!validatePhoneNumber(normalized)) {
+                setError('Please enter a valid Kenya phone number (e.g., 0712345678)');
+                return;
+            }
+            
+            setNormalizedPhone(normalized);
+            setStep('otp');
+        } catch (err) {
+            setError('Invalid phone number format');
+        }
+    };
+
+    const handleOtpSubmit = (e) => {
+        e.preventDefault();
+        setError('');
+
+        if (otpInput === '123456') {
+            onLogin({ phone: normalizedPhone });
+        } else {
+            setError('Invalid verification code. Try 123456');
+        }
+    };
+
+    return (
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '60vh',
+            width: '100%',
+            maxWidth: '400px',
+            margin: '0 auto'
+        }}>
+            <div style={{
+                background: '#1C1C1C',
+                padding: '2rem',
+                borderRadius: '16px',
+                border: '1px solid #333',
+                width: '100%',
+                boxSizing: 'border-box',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+            }}>
+                <h2 style={{ margin: '0 0 1.5rem 0', textAlign: 'center', fontSize: '1.5rem' }}>
+                    {step === 'phone' ? 'Welcome Back' : 'Verify Phone'}
+                </h2>
+                
+                {step === 'phone' && (
+                    <form onSubmit={handlePhoneSubmit} className="control-group">
+                        <label htmlFor="phone">Phone number (Kenya)</label>
+                        <input 
+                            type="tel" 
+                            id="phone" 
+                            placeholder="0712345678" 
+                            value={phoneInput}
+                            onChange={(e) => setPhoneInput(e.target.value)}
+                            autoFocus
+                        />
+                        <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '-0.5rem' }}>
+                            We'll send an SMS code to verify your number.
+                        </div>
+                        {error && <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>{error}</div>}
+                        <button type="submit" className="download-button" disabled={isLoading} style={{ marginTop: '0.5rem' }}>
+                            {isLoading ? 'Sending...' : 'Continue'}
+                        </button>
+                    </form>
+                )}
+
+                {step === 'otp' && (
+                    <form onSubmit={handleOtpSubmit} className="control-group">
+                        <div style={{ textAlign: 'center', marginBottom: '1rem', color: '#aaa' }}>
+                            Enter the code sent to <br/>
+                            <strong style={{ color: '#fff' }}>{normalizedPhone}</strong>
+                        </div>
+                        <label htmlFor="otp">Verification Code</label>
+                        <input 
+                            type="text" 
+                            id="otp" 
+                            placeholder="123456" 
+                            value={otpInput}
+                            onChange={(e) => setOtpInput(e.target.value)}
+                            maxLength={6}
+                            autoFocus
+                            style={{ letterSpacing: '0.5rem', textAlign: 'center', fontSize: '1.2rem' }}
+                        />
+                        {error && <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>{error}</div>}
+                        <button type="submit" className="download-button" disabled={isLoading} style={{ marginTop: '0.5rem' }}>
+                            {isLoading ? 'Verifying...' : 'Verify & Login'}
+                        </button>
+                        <button 
+                            type="button" 
+                            onClick={() => { setStep('phone'); setError(''); }}
+                            style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', marginTop: '1rem', textDecoration: 'underline' }}
+                        >
+                            Change Phone Number
+                        </button>
+                    </form>
+                )}
+            </div>
+        </div>
+    );
+};
+
+
+// --- MAIN APP ---
+
 const getFormattedTimestamp = () => {
     const now = new Date();
     const time = now.toLocaleTimeString('en-US', {
@@ -163,6 +312,9 @@ const getFormattedTimestamp = () => {
 };
 
 const App = () => {
+    // Auth State
+    const [user, setUser] = useState<{ phone: string } | null>(null);
+
     const [data, setData] = useState({
         profilePic: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg',
         username: 'Njivai',
@@ -178,6 +330,10 @@ const App = () => {
     
     const previewPanelRef = useRef(null);
 
+    const handleLogin = (loggedInUser) => {
+        setUser(loggedInUser);
+        // Optionally update username based on phone/lookup in real app
+    };
 
     const handleDownload = () => {
         const stickerElement = document.getElementById('tweet-sticker');
@@ -219,21 +375,28 @@ const App = () => {
                 <h1>TweetSticker Studio</h1>
             </header>
             <main>
-                <Editor 
-                    data={data} setData={setData} 
-                    style={style} setStyle={setStyle} 
-                    onDownload={handleDownload} 
-                />
-                <section 
-                    className="preview-panel" 
-                    aria-label="Tweet Sticker Preview"
-                    ref={previewPanelRef}
-                >
-                    <TweetStickerPreview 
-                        data={data} 
-                        style={style} 
-                    />
-                </section>
+                {!user ? (
+                    <LoginPage onLogin={handleLogin} />
+                ) : (
+                    <>
+                        <Editor 
+                            data={data} setData={setData} 
+                            style={style} setStyle={setStyle} 
+                            onDownload={handleDownload}
+                            user={user}
+                        />
+                        <section 
+                            className="preview-panel" 
+                            aria-label="Tweet Sticker Preview"
+                            ref={previewPanelRef}
+                        >
+                            <TweetStickerPreview 
+                                data={data} 
+                                style={style} 
+                            />
+                        </section>
+                    </>
+                )}
             </main>
         </div>
     );
