@@ -5,8 +5,6 @@ import html2canvas from 'html2canvas';
 // Declare gtag for TypeScript to recognize the Google Analytics function
 declare const gtag: (...args: any[]) => void;
 
-// --- THEMES ---
-
 const themes = [
     { name: 'Light', style: { background: '#ffffff', color: '#111827', secondaryColor: '#6b7280' } },
     { name: 'Dark', style: { background: '#1f2937', color: '#f9fafb', secondaryColor: '#9ca3af' } },
@@ -17,8 +15,6 @@ const themes = [
     { name: 'Solar Flare', style: { background: 'linear-gradient(to right, #f12711, #f5af19)', color: '#ffffff', secondaryColor: '#fff0d9' } },
     { name: 'Royal Amethyst', style: { background: 'linear-gradient(to right, #4527a0, #7e57c2)', color: '#ffffff', secondaryColor: '#e7dfff' } },
 ];
-
-// --- COMPONENTS ---
 
 const TweetStickerPreview = ({ data, style }) => {
     const stickerStyle = {
@@ -151,8 +147,6 @@ const Editor = ({ data, setData, style, setStyle, onDownload }) => {
     );
 };
 
-// --- MAIN APP ---
-
 const getFormattedTimestamp = () => {
     const now = new Date();
     const time = now.toLocaleTimeString('en-US', {
@@ -187,7 +181,6 @@ const App = () => {
     const handleDownload = () => {
         const stickerElement = document.getElementById('tweet-sticker');
         if (stickerElement) {
-            // Track download event with Google Analytics
             if (typeof gtag === 'function') {
                 const activeTheme = themes.find(t => t.style.background === style.background);
                 gtag('event', 'download_sticker', {
